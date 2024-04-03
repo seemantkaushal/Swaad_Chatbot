@@ -27,9 +27,8 @@ async def handle_request(request: Request):
 
     intent_handler_dict={
         "track.order context: ongoing-tracking":track_order,
-        "Add.order":add_order
-        # "complete-order context:ongoing-order": complete_order(parameters)
-
+        "Add.order":add_order,
+        "complete-order context:ongoing-order": complete_order
     }
     return intent_handler_dict[intent](parameters,session_id)
 
@@ -71,11 +70,40 @@ def add_order(parameters:dict ,session_id:str):
 
 
 
-# def complete_order(parameters:dict):
+def complete_order(parameters:dict,session_id :str):
+    if session_id not in inprogress_orders:
+        fulfillment_text="Something went wrong , please try again !!!"
+    else:
+        order= inprogress_orders[session_id]
+        order_id=save_to_db(order)
+        order_total=db_helper.get_total_order_price(order_id)
+        if order_id==-1:
+            fulfillment_text="sorry We could not place your order due to some error Please try again.."
+        else:
+            fulfillment_text = (f"Awsome , we have placed your order "
+                                f"Your order id :#{order_id}"
+                                f"your Total Amount:Rs{order_total}")
+
+    del inprogress_orders[session_id]
+    return JSONResponse(content={
+        'fulfillment_text':"Thank you for placing order ,your order id is :###"
+    })
+def save_to_db(order: dict):
+    next_order_id=db_helper.get_next_order_id()
+    for food_item , quantity in order.items():
+        rcode=db_helper.insert_order_item(food_item,
+                                    quantity,
+                                    next_order_id)
+        if rcode==-1:
+            return -1
+
+    db_helper.insert_order_tracking(next_order_id,"in-progress")
+    return next_order_id
 
 # def add_order_db(parameters: dict):
 #     # food_item
 #     food_item = parameters["food-name"]
+
 #     # Quantity
 #     quantity = parameters['number']
 #     item_id = fooditem_id(food_item)
