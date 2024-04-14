@@ -1,5 +1,5 @@
-
 import mysql.connector
+
 # global cnx
 
 cnx = mysql.connector.connect(
@@ -8,6 +8,8 @@ cnx = mysql.connector.connect(
     password="Seemant4aug",
     database="pandeyji_eatery"
 )
+
+
 def get_order_status(order_id):
     cursor = cnx.cursor()
 
@@ -27,25 +29,27 @@ def get_order_status(order_id):
     else:
         return None
 
-def add_order(A,B,C):
-    cursor = cnx.cursor()
-    querry = "insert into orders(order_id,item_id,quantity,total_price) VALUES({},{},{},{})".format(A, B, C)
-    cursor.execute(querry)
 
+# def add_order(A,B,C):
+#     cursor = cnx.cursor()
+#     query = "insert into orders(order_id,item_id,quantity,total_price) VALUES({},{},{},{})".format(A, B, C)
+#     cursor.execute(query)
 
 
 def get_next_order_id():
     cursor = cnx.cursor()
-    querry = "select MAX(order_id) from orders"
-    cursor.execute(querry)
+    query = "select MAX(order_id) from orders"
+    cursor.execute(query)
 
-    result = cursor.fetchone()
+    result = cursor.fetchone()[0]
     if (result is None):
         return 1
     else:
         return result + 1
-def insert_order_item(food_item,quantity,next_order_id):
-    try :
+
+
+def insert_order_item(food_item, quantity, next_order_id):
+    try:
         cursor = cnx.cursor()
         cursor.callproc('insert_order_item', (food_item, quantity, next_order_id))
         cnx.commit()
@@ -54,27 +58,29 @@ def insert_order_item(food_item,quantity,next_order_id):
         return 1
 
     except mysql.connector.Error as err:
-        print(f"Error inserting order item :{err}")
+        print("Something went wrong: {err}")
         cnx.rollback()
         return -1
-    except Exception as e :
+    except Exception as e:
         print(f"Error occured : {e}")
         cnx.rollback()
         return -1
 
+
 def get_total_order_price(order_id):
-    cursor=cnx.cursor()
-    querry=f"select get_total_order_price({order_id})"
-    cursor.execute(querry)
-    result=cursor.fetchone()[0]
+    cursor = cnx.cursor()
+    query = f"select get_total_order_price({order_id})"
+    cursor.execute(query)
+    result = cursor.fetchone()[0]
     cursor.close()
     return result
 
-def insert_order_tracking(order_id,text):
-    cursor = cnx.cursor()
-    querry = f"insert into order_tracking(order_id,status) values(%s,%s)"
 
-    cursor.execute(querry,(order_id,text))
+def insert_order_tracking(order_id, text):
+    cursor = cnx.cursor()
+    query = f"insert into order_tracking(order_id,status) values(%s,%s)"
+
+    cursor.execute(query, (int(order_id), text))
+    cnx.commit()
     # result = cursor.fetchone()[0]
     cursor.close()
-    # return result
