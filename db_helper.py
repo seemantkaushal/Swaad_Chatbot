@@ -2,12 +2,7 @@ import mysql.connector
 
 # global cnx
 
-cnx = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="Seemant4aug",
-    database="pandeyji_eatery"
-)
+cnx = mysql.connector.connect(user="rkdk", password="Seemant@4aug", host="rkdk.mysql.database.azure.com", port=3306, database="kaushal_swaad")
 
 
 def get_order_status(order_id):
