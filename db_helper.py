@@ -1,5 +1,5 @@
-import mysql.connector
-
+# import mysql.connector
+import pymysql
 # global cnx
 
 cnx = mysql.connector.connect(user="rkdk", password="Seemant@4aug", host="rkdk.mysql.database.azure.com", port=3306, database="kaushal_swaad")
