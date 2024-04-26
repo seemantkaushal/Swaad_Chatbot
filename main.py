@@ -7,6 +7,36 @@ import generic_helper
 app = FastAPI()
 inprogress_orders = dict()
 
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+import db_helper
+import generic_helper
+
+app = FastAPI()
+inprogress_orders = dict()
+
+@app.post("/webhook")
+async def handle_dialogflow_request(request: Request):
+    # Retrieve the JSON data from the request
+    payload = await request.json()
+
+    # Extract the necessary information from the payload
+    intent = payload['queryResult']['intent']['displayName']
+    parameters = payload['queryResult']['parameters']
+    output_context = payload['queryResult']["outputContexts"]
+    session_id = generic_helper.extract_session_id(output_context[0]["name"])
+
+    # Map intents to handler functions
+    intent_handler_dict = {
+        "track.order context: ongoing-tracking": track_order,
+        "add.order": add_order,
+        "complete-order context: ongoing-order": complete_order,
+        "remove.order": remove_order,
+    }
+
+    # Call the appropriate handler function based on the intent
+    return intent_handler_dict[intent](parameters, session_id)
+
 
 @app.post("/")
 async def handle_request(request: Request):
