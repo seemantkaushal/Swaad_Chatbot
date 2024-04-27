@@ -7,14 +7,6 @@ import generic_helper
 app = FastAPI()
 inprogress_orders = dict()
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-import db_helper
-import generic_helper
-
-app = FastAPI()
-inprogress_orders = dict()
-
 @app.post("/")
 async def handle_request(request: Request):
     # Retrieve the JSON data from the request
