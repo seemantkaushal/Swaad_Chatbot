@@ -4,7 +4,9 @@ from fastapi.responses import JSONResponse
 import db_helper
 import generic_helper
 
+
 app = FastAPI()
+connection=db_helper.get_mysql_connection()
 inprogress_orders = dict()
 
 @app.post("/")
@@ -31,12 +33,12 @@ async def handle_request(request: Request):
         "complete-order context:ongoing-order": complete_order,
         "remove.order": remove_order
     }
-    return intent_handler_dict[intent](parameters, session_id)
+    return intent_handler_dict[intent](parameters, session_id,connection)
 
 
-def track_order(parameters: dict, session_id: str):
+def track_order(parameters: dict, session_id: str,connection):
     order_id = int(parameters['number'])
-    order_status = db_helper.get_order_status(order_id)
+    order_status = db_helper.get_order_status(order_id,connection)
     if order_status:
         fulfillment_text = f"The order status for order id: {order_id} is: {order_status}"
     else:
@@ -47,7 +49,7 @@ def track_order(parameters: dict, session_id: str):
     })
 
 
-def add_order(parameters: dict, session_id: str):
+def add_order(parameters: dict, session_id: str,connection):
     item_name = parameters["food-name"]
     quantity = parameters['number']
     if len(quantity) != len(item_name):
@@ -71,14 +73,14 @@ def add_order(parameters: dict, session_id: str):
     })
 
 
-def complete_order(parameters: dict, session_id: str):
+def complete_order(parameters: dict, session_id: str,connection):
     if session_id not in inprogress_orders:
         fulfillment_text = "Something went wrong , please try again !!!"
     else:
         order = inprogress_orders[session_id]
         print(order.values())
         order_id = save_to_db(order)
-        order_total = db_helper.get_total_order_price(order_id)
+        order_total = db_helper.get_total_order_price(order_id,connection)
         if order_id == -1:
             fulfillment_text = "sorry We could not place your order due to some error Please try again.."
         else:
@@ -94,20 +96,20 @@ def complete_order(parameters: dict, session_id: str):
     })
 
 
-def save_to_db(order: dict):
+def save_to_db(order: dict,connection):
     # print("hello")
-    next_order_id = db_helper.get_next_order_id()
+    next_order_id = db_helper.get_next_order_id(connection)
     for food_item, quantity in order.items():
         rcode = db_helper.insert_order_item(food_item,
                                             quantity,
-                                            next_order_id)
+                                            next_order_id,connection)
         if rcode == -1:
             return -1
-    db_helper.insert_order_tracking(next_order_id, "in-progress")
+    db_helper.insert_order_tracking(next_order_id, "in-progress",connection)
     return next_order_id
 
 
-def remove_order(parameters: dict, session_id: str):
+def remove_order(parameters: dict, session_id: str,connection):
     # print("Came to remove an order")
     current_order = inprogress_orders[session_id]
     if session_id not in inprogress_orders:

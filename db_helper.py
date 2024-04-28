@@ -1,12 +1,23 @@
-# import mysql.connector
 import pymysql
-# global cnx
 
-cnx = mysql.connector.connect(user="rkdk", password="Seemant@4aug", host="rkdk.mysql.database.azure.com", port=3306, database="kaushal_swaad")
+# Define the MySQL connection function
+def get_mysql_connection():
+    ssl_config = {
+        'ca': 'DigiCertGlobalRootCA.crt.pem',  # Path to your CA certificate file
+    }
 
+    connection = pymysql.connect(
+        host='swaad-mysql-server.mysql.database.azure.com',  # Azure MySQL server hostname
+        user='admin_seemant',  # Username with server name
+        password='Seemant@4aug',  # MySQL password
+        database='kaushal_swaad',  # Database name
+        port=3306,
+        ssl=ssl_config
+    )
+    return connection
 
-def get_order_status(order_id):
-    cursor = cnx.cursor()
+def get_order_status(order_id,connection):
+    cursor = connection.cursor()
 
     # Executing the SQL query to fetch the order status
     query = f"SELECT status FROM order_tracking WHERE order_id = {order_id}"
@@ -31,8 +42,8 @@ def get_order_status(order_id):
 #     cursor.execute(query)
 
 
-def get_next_order_id():
-    cursor = cnx.cursor()
+def get_next_order_id(connection):
+    cursor = connection.cursor()
     query = "select MAX(order_id) from orders"
     cursor.execute(query)
 
@@ -43,27 +54,27 @@ def get_next_order_id():
         return result + 1
 
 
-def insert_order_item(food_item, quantity, next_order_id):
+def insert_order_item(food_item, quantity, next_order_id,connection):
     try:
-        cursor = cnx.cursor()
+        cursor = connection.cursor()
         cursor.callproc('insert_order_item', (food_item, quantity, next_order_id))
-        cnx.commit()
+        connection.commit()
         cursor.close()
         print("order item inserted sucessfully")
         return 1
 
-    except mysql.connector.Error as err:
+    except pymysql.MySQLError as err:
         print("Something went wrong: {err}")
-        cnx.rollback()
+        connection.rollback()
         return -1
     except Exception as e:
         print(f"Error occured : {e}")
-        cnx.rollback()
+        connection.rollback()
         return -1
 
 
-def get_total_order_price(order_id):
-    cursor = cnx.cursor()
+def get_total_order_price(order_id,connection):
+    cursor = connection.cursor()
     query = f"select get_total_order_price({order_id})"
     cursor.execute(query)
     result = cursor.fetchone()[0]
@@ -71,11 +82,11 @@ def get_total_order_price(order_id):
     return result
 
 
-def insert_order_tracking(order_id, text):
-    cursor = cnx.cursor()
+def insert_order_tracking(order_id, text,connection):
+    cursor = connection.cursor()
     query = f"insert into order_tracking(order_id,status) values(%s,%s)"
 
     cursor.execute(query, (int(order_id), text))
-    cnx.commit()
+    connection.commit()
     # result = cursor.fetchone()[0]
     cursor.close()

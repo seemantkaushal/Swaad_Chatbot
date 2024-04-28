@@ -1,2 +1,3 @@
 mysql-connector-python
-fastapi[all]
+fastapi[all]~=0.110.0
+PyMySQL~=1.1.0
