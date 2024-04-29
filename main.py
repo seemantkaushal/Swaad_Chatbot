@@ -79,7 +79,7 @@ def complete_order(parameters: dict, session_id: str,connection):
     else:
         order = inprogress_orders[session_id]
         print(order.values())
-        order_id = save_to_db(order)
+        order_id = save_to_db(order,connection)
         order_total = db_helper.get_total_order_price(order_id,connection)
         if order_id == -1:
             fulfillment_text = "sorry We could not place your order due to some error Please try again.."
